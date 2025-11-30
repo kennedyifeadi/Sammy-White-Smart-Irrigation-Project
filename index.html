@@ -95,17 +95,28 @@
                         </span>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white">Crop Doctor AI</h3>
                     </div>
-                    <div class="bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm rounded-xl p-4 border border-green-100 dark:border-green-800/30">
-                        <p id="ai-message" class="text-lg font-medium text-gray-800 dark:text-gray-100">Initializing...</p>
-                        <div class="mt-3 flex items-center space-x-3 text-sm">
-                            <span id="crop-stage-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                Stage: Syncing...
-                            </span>
-                            <span class="text-gray-500 dark:text-gray-400 border-l border-gray-300 dark:border-gray-600 pl-3">
-                                Action: <span id="ai-action" class="font-semibold text-gray-700 dark:text-gray-300">Standby</span>
-                            </span>
+                    
+                    <div class="flex justify-between items-center bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm rounded-xl p-4 border border-green-100 dark:border-green-800/30">
+                        <div>
+                            <p id="ai-message" class="text-lg font-medium text-gray-800 dark:text-gray-100">Initializing...</p>
+                            <div class="mt-2 text-sm">
+                                <span class="text-gray-500 dark:text-gray-400">
+                                    Action: <span id="ai-action" class="font-semibold text-gray-700 dark:text-gray-300">Standby</span>
+                                </span>
+                                <span class="mx-2 text-gray-300">|</span>
+                                <span id="kc-display" class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Kc: --</span>
+                            </div>
+                        </div>
+
+                        <div class="ml-4 flex flex-col items-center justify-center bg-green-100 dark:bg-green-900/50 p-3 rounded-xl min-w-[100px] border border-green-200 dark:border-green-800">
+                            <span class="text-[10px] uppercase font-bold text-green-600 dark:text-green-400 tracking-wider">Crop Age</span>
+                            <div class="flex items-baseline">
+                                <span id="days-val" class="text-3xl font-bold text-green-800 dark:text-green-100">--</span>
+                                <span class="text-xs font-medium text-green-600 dark:text-green-400 ml-1">Days</span>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -327,7 +338,8 @@
                 "ET0": 4.5 + Math.random(),
                 "CWR_Liters_Day": 0.057 + (Math.random() * 0.001),
                 "TotalWaterLiters": simTotalWater,
-                "Kc_Value": 0.8
+                "Kc_Value": 0.8,
+                "Days_Old": 15
             }];
         }
 
@@ -418,7 +430,11 @@
             
             document.getElementById('ai-message').innerText = aiMsg;
             document.getElementById('ai-action').innerText = action;
-            document.getElementById('crop-stage-badge').innerText = `Kc: ${(data.Kc_Value || 0.7).toFixed(2)}`;
+            document.getElementById('kc-display').innerText = `Kc: ${(data.Kc_Value || 0.7).toFixed(2)}`;
+            
+            // UPDATE: Display Days Old
+            const daysOld = data.Days_Old !== undefined ? data.Days_Old : 0;
+            document.getElementById('days-val').innerText = daysOld;
         }
 
         function updateHistory(data) {
