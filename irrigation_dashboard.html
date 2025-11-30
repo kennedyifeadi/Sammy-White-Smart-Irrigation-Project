@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Spinach Pro V3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        /* Animations */
+        .ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+        
+        /* Circular Chart */
+        .circular-chart { display: block; margin: 0 auto; max-width: 80%; max-height: 250px; }
+        .circle-bg { fill: none; stroke: #eee; stroke-width: 3.8; }
+        .circle { fill: none; stroke-width: 2.8; stroke-linecap: round; transition: stroke-dasharray 1s ease-out; }
+        .dark .circle-bg { stroke: #374151; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300 font-sans">
+
+    <nav class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="bg-green-100 dark:bg-green-900 p-2 rounded-lg mr-3">
+                        <i data-lucide="sprout" class="text-green-600 dark:text-green-400 w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight leading-none">Spinach<span class="text-green-600 dark:text-green-400">Guard</span></h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Precision Irrigation System</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600">
+                        <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-green-500 mr-2 relative flex">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        </span>
+                        <span id="status-text" class="text-xs font-bold text-gray-600 dark:text-gray-300 tracking-wide">ONLINE</span>
+                    </div>
+
+                    <button id="theme-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                        <i data-lucide="sun" id="icon-sun" class="w-5 h-5"></i>
+                        <i data-lucide="moon" id="icon-moon" class="hidden w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ibadan, NG</p>
+                        <div class="mt-1 flex items-baseline">
+                            <span id="weather-temp" class="text-5xl font-extrabold tracking-tight">--</span>
+                            <span class="text-2xl font-light ml-1 text-gray-500">°C</span>
+                        </div>
+                        <p id="weather-desc" class="text-sm font-medium text-gray-600 dark:text-gray-300 mt-1 flex items-center">
+                            <i data-lucide="loader" class="w-3 h-3 mr-1 animate-spin"></i> Syncing Forecast...
+                        </p>
+                    </div>
+                    <div id="weather-icon-box" class="p-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-2xl text-yellow-600 dark:text-yellow-400">
+                        <i data-lucide="sun" class="w-10 h-10"></i>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex justify-between text-xs font-semibold mb-2 text-gray-500">
+                        <span>RAIN CHANCE (2H)</span>
+                        <span id="rain-prob">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                        <div id="rain-bar" class="bg-blue-500 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-gradient-to-br from-white to-green-50 dark:from-gray-800 dark:to-green-900/10 rounded-2xl shadow-sm p-6 border border-green-100 dark:border-green-800/30 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <i data-lucide="brain-circuit" class="w-32 h-32 text-green-600"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white mr-3 shadow-lg shadow-green-600/20">
+                            <i data-lucide="bot" class="w-5 h-5"></i>
+                        </span>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Crop Doctor AI</h3>
+                    </div>
+                    <div class="bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm rounded-xl p-4 border border-green-100 dark:border-green-800/30">
+                        <p id="ai-message" class="text-lg font-medium text-gray-800 dark:text-gray-100">Initializing...</p>
+                        <div class="mt-3 flex items-center space-x-3 text-sm">
+                            <span id="crop-stage-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                Stage: Syncing...
+                            </span>
+                            <span class="text-gray-500 dark:text-gray-400 border-l border-gray-300 dark:border-gray-600 pl-3">
+                                Action: <span id="ai-action" class="font-semibold text-gray-700 dark:text-gray-300">Standby</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-200 dark:border-gray-700 flex flex-col h-64">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Soil Moisture</h3>
+                    <i data-lucide="droplets" class="w-4 h-4 text-green-500"></i>
+                </div>
+                <div class="relative w-28 h-28 mx-auto my-auto">
+                    <svg viewBox="0 0 36 36" class="circular-chart text-green-500">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="soil-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="soil-percent" class="text-2xl font-bold text-gray-800 dark:text-white">--%</span>
+                    </div>
+                </div>
+                <div class="h-12 w-full mt-auto"><canvas id="chart-soil-mini"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-200 dark:border-gray-700 flex flex-col h-64">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Temperature</h3>
+                    <i data-lucide="thermometer" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <div class="flex flex-col items-center justify-center flex-grow">
+                    <div id="temp-gauge" class="w-32 h-16 rounded-t-full bg-gray-200 dark:bg-gray-700 relative overflow-hidden" style="background: conic-gradient(from 180deg at 50% 100%, #22c55e 0deg, #eab308 90deg, #ef4444 180deg);">
+                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-28 h-14 bg-white dark:bg-gray-800 rounded-t-full flex items-end justify-center pb-2">
+                            <span id="temp-val" class="text-2xl font-bold">--</span>
+                        </div>
+                    </div>
+                    <span class="text-sm text-gray-500 mt-2">Celsius</span>
+                </div>
+                <div class="h-12 w-full mt-auto"><canvas id="chart-temp-mini"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-200 dark:border-gray-700 flex flex-col h-64">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Humidity</h3>
+                    <i data-lucide="wind" class="w-4 h-4 text-purple-500"></i>
+                </div>
+                <div class="relative w-28 h-28 mx-auto my-auto">
+                    <svg viewBox="0 0 36 36" class="circular-chart text-purple-500">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="hum-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="hum-val" class="text-2xl font-bold text-gray-800 dark:text-white">--%</span>
+                    </div>
+                </div>
+                <div class="h-12 w-full mt-auto"><canvas id="chart-hum-mini"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-200 dark:border-gray-700 flex flex-col h-64">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Ref. ET (ET₀)</h3>
+                    <i data-lucide="sun" class="w-4 h-4 text-orange-500"></i>
+                </div>
+                <div class="flex flex-col items-center justify-center flex-grow">
+                     <div class="text-center">
+                        <span id="et0-val" class="text-5xl font-extrabold text-orange-500">--</span>
+                        <p class="text-xs text-gray-400 mt-2">mm / day</p>
+                     </div>
+                     <div class="w-24 bg-gray-100 dark:bg-gray-700 h-1.5 rounded-full mt-4">
+                        <div id="et0-bar" class="bg-orange-500 h-1.5 rounded-full" style="width: 0%"></div>
+                     </div>
+                </div>
+                <div class="h-12 w-full mt-auto"><canvas id="chart-et0-mini"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border-l-4 border-blue-500 flex flex-col h-64">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Water Need (CWR)</h3>
+                    <i data-lucide="target" class="w-4 h-4 text-blue-500"></i>
+                </div>
+                <div class="flex flex-col items-center justify-center flex-grow">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-full mb-2">
+                        <i data-lucide="droplet" class="w-8 h-8 text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <span id="cwr-val" class="text-3xl font-bold text-blue-600 dark:text-blue-400">--</span>
+                    <span class="text-xs text-gray-500">Liters / Day</span>
+                </div>
+                <div class="h-12 w-full mt-auto"><canvas id="chart-cwr-mini"></canvas></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border-l-4 border-cyan-500 flex flex-col h-64">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Total Water Used</h3>
+                    <i data-lucide="container" class="w-4 h-4 text-cyan-500"></i>
+                </div>
+                <div class="flex flex-col items-center justify-center flex-grow">
+                    <div class="bg-gray-900 text-cyan-400 font-mono text-3xl px-4 py-2 rounded shadow-inner border border-gray-700">
+                        <span id="total-val">0.00</span> <span class="text-sm text-gray-500">L</span>
+                    </div>
+                    <div class="flex items-center mt-3 space-x-2 text-xs text-gray-500">
+                        <i data-lucide="activity" class="w-3 h-3"></i>
+                        <span>Flow: <span id="flow-val" class="font-bold text-cyan-600">0.0</span> L/min</span>
+                    </div>
+                </div>
+                <div class="h-12 w-full mt-auto"><canvas id="chart-total-mini"></canvas></div>
+            </div>
+
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">System Trends</h3>
+                <div class="flex space-x-2 mt-2 sm:mt-0 overflow-x-auto">
+                    <button onclick="setMainChart('SoilMoisture')" class="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors">Soil</button>
+                    <button onclick="setMainChart('Temperature')" class="px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors">Temp</button>
+                    <button onclick="setMainChart('CWR')" class="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">CWR</button>
+                    <button onclick="setMainChart('TotalWater')" class="px-3 py-1 text-xs font-medium rounded-full bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition-colors">Usage</button>
+                </div>
+            </div>
+            <div class="h-80 w-full">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-6 text-xs text-gray-400">
+        &copy; 2025 SpinachGuard. Precision Farming Dashboard.
+    </footer>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const USE_SIMULATED_DATA = true; // Set to false for real data
+        const SPREADSHEET_URL = 'https://script.google.com/macros/s/AKfycbz5IxkHWljLRpSAZl5YkkWNZlmaxfGaCPVXXYjf9wXernbCQ02Nca_Zf_r9Q-a7D0PS4A/exec'; 
+        
+        // ================= THEME & UI =================
+        lucide.createIcons();
+        const html = document.documentElement;
+        
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+            document.getElementById('icon-sun').classList.add('hidden');
+            document.getElementById('icon-moon').classList.remove('hidden');
+        }
+
+        document.getElementById('theme-btn').addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('icon-sun').classList.toggle('hidden');
+            document.getElementById('icon-moon').classList.toggle('hidden');
+            updateChartsTheme(isDark);
+        });
+
+        // ================= CHART SETUP =================
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } },
+            elements: { point: { radius: 0 }, line: { borderWidth: 2, tension: 0.4 } }
+        };
+
+        function createMiniChart(id, color) {
+            return new Chart(document.getElementById(id).getContext('2d'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: color, fill: true, backgroundColor: color + '20' }] },
+                options: commonOptions
+            });
+        }
+
+        // Init 6 Mini Charts
+        const charts = {
+            soil: createMiniChart('chart-soil-mini', '#22c55e'),
+            temp: createMiniChart('chart-temp-mini', '#ef4444'),
+            hum: createMiniChart('chart-hum-mini', '#a855f7'),
+            et0: createMiniChart('chart-et0-mini', '#f97316'),
+            cwr: createMiniChart('chart-cwr-mini', '#2563eb'),
+            total: createMiniChart('chart-total-mini', '#06b6d4')
+        };
+
+        // Init Main Chart
+        let currentMainMetric = 'SoilMoisture';
+        const mainChart = new Chart(document.getElementById('mainChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Value', data: [], borderColor: '#22c55e', backgroundColor: '#22c55e10', fill: true }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { grid: { display: false } }, 
+                    y: { grid: { color: '#e5e7eb' } }
+                }
+            }
+        });
+
+        function setMainChart(metric) {
+            currentMainMetric = metric;
+            const colors = { 'SoilMoisture': '#22c55e', 'Temperature': '#ef4444', 'ET0': '#f97316', 'CWR': '#2563eb', 'TotalWater': '#06b6d4' };
+            mainChart.data.datasets[0].borderColor = colors[metric];
+            mainChart.data.datasets[0].backgroundColor = colors[metric] + '10';
+            mainChart.update();
+        }
+
+        // ================= DATA LOGIC =================
+        const SOIL_DRY = 1024;
+        const SOIL_WET = 200;
+
+        // Simulated Data Generator (Now includes accumulating total water)
+        let simTotalWater = 0.0;
+        function getSimulatedData() {
+            const now = new Date();
+            simTotalWater += Math.random() * 0.01; // Slowly increase total
+            return [{
+                "Timestamp": new Date(now.getTime() - 2000).toISOString(),
+                "Temperature": 28 + Math.sin(now.getTime()/10000),
+                "Humidity": 70 + Math.random() * 5,
+                "SoilMoisture": 600 + Math.sin(now.getTime()/5000) * 200,
+                "Flowrate": Math.random() > 0.7 ? Math.random() * 2 : 0,
+                "ET0": 4.5 + Math.random(),
+                "CWR_Liters_Day": 0.057 + (Math.random() * 0.001),
+                "TotalWaterLiters": simTotalWater,
+                "Kc_Value": 0.8
+            }];
+        }
+
+        let history = []; 
+
+        async function fetchData() {
+            let latest;
+            if (USE_SIMULATED_DATA) {
+                const data = getSimulatedData();
+                latest = data[0];
+            } else {
+                try {
+                    const res = await fetch(SPREADSHEET_URL);
+                    const json = await res.json();
+                    const data = Array.isArray(json) ? json : [json];
+                    latest = data[data.length - 1];
+                } catch(e) { console.error(e); return; }
+            }
+            
+            if(latest) {
+                updateVisuals(latest);
+                updateHistory(latest);
+            }
+        }
+
+        function updateVisuals(data) {
+            // 1. Soil
+            let rawSoil = data.SoilMoisture;
+            let soilPercent = 100 - ((rawSoil - SOIL_WET) / (SOIL_DRY - SOIL_WET) * 100);
+            soilPercent = Math.max(0, Math.min(100, soilPercent));
+            
+            document.getElementById('soil-percent').innerText = soilPercent.toFixed(0) + "%";
+            document.getElementById('soil-circle').setAttribute('stroke-dasharray', `${soilPercent}, 100`);
+            document.getElementById('soil-circle').setAttribute('stroke', soilPercent < 30 ? '#ef4444' : '#22c55e');
+
+            // 2. Temp
+            document.getElementById('temp-val').innerText = data.Temperature.toFixed(1);
+            
+            // 3. Humidity
+            document.getElementById('hum-val').innerText = data.Humidity.toFixed(0) + "%";
+            document.getElementById('hum-circle').setAttribute('stroke-dasharray', `${data.Humidity}, 100`);
+
+            // 4. ET0
+            document.getElementById('et0-val').innerText = data.ET0.toFixed(2);
+            document.getElementById('et0-bar').style.width = Math.min(100, (data.ET0 / 10) * 100) + "%";
+
+            // 5. CWR (Water Need)
+            document.getElementById('cwr-val').innerText = (data.CWR_Liters_Day || 0).toFixed(4);
+
+            // 6. Total Water & Flow
+            document.getElementById('total-val').innerText = (data.TotalWaterLiters || 0).toFixed(2);
+            document.getElementById('flow-val').innerText = (data.Flowrate || 0).toFixed(1);
+
+            // AI Logic
+            let aiMsg = "System optimal.";
+            let action = "Monitor";
+            if(soilPercent < 30) { aiMsg = "Soil Critical (Dry)"; action = "Irrigate Now"; }
+            else if(soilPercent > 90) { aiMsg = "Soil Saturated"; action = "Drainage Check"; }
+            
+            document.getElementById('ai-message').innerText = aiMsg;
+            document.getElementById('ai-action').innerText = action;
+            document.getElementById('crop-stage-badge').innerText = `Kc: ${(data.Kc_Value || 0.7).toFixed(2)}`;
+        }
+
+        function updateHistory(data) {
+            const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            if (history.length > 20) history.shift();
+            
+            let soilPct = 100 - ((data.SoilMoisture - SOIL_WET) / (SOIL_DRY - SOIL_WET) * 100);
+            soilPct = Math.max(0, Math.min(100, soilPct));
+
+            history.push({ 
+                label: timeStr, 
+                soil: soilPct, 
+                temp: data.Temperature, 
+                hum: data.Humidity, 
+                et0: data.ET0, 
+                cwr: data.CWR_Liters_Day || 0,
+                total: data.TotalWaterLiters || 0
+            });
+
+            // Update Mini Charts
+            const labels = history.map(d => d.label);
+            updateMiniChart(charts.soil, labels, history.map(d => d.soil));
+            updateMiniChart(charts.temp, labels, history.map(d => d.temp));
+            updateMiniChart(charts.hum, labels, history.map(d => d.hum));
+            updateMiniChart(charts.et0, labels, history.map(d => d.et0));
+            updateMiniChart(charts.cwr, labels, history.map(d => d.cwr));
+            updateMiniChart(charts.total, labels, history.map(d => d.total));
+
+            // Update Main Chart
+            mainChart.data.labels = labels;
+            if(currentMainMetric === 'SoilMoisture') mainChart.data.datasets[0].data = history.map(d => d.soil);
+            if(currentMainMetric === 'Temperature') mainChart.data.datasets[0].data = history.map(d => d.temp);
+            if(currentMainMetric === 'ET0') mainChart.data.datasets[0].data = history.map(d => d.et0);
+            if(currentMainMetric === 'CWR') mainChart.data.datasets[0].data = history.map(d => d.cwr);
+            if(currentMainMetric === 'TotalWater') mainChart.data.datasets[0].data = history.map(d => d.total);
+            mainChart.update();
+        }
+
+        function updateMiniChart(chart, labels, data) {
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.update();
+        }
+
+        function updateChartsTheme(isDark) {
+            const color = isDark ? '#374151' : '#e5e7eb';
+            mainChart.options.scales.y.grid.color = color;
+            mainChart.update();
+        }
+
+        // ================= WEATHER INIT =================
+        async function initWeather() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=7.3775&longitude=3.9470&current=temperature_2m,weather_code&hourly=precipitation_probability&forecast_days=1`);
+                const w = await res.json();
+                document.getElementById('weather-temp').innerText = w.current.temperature_2m.toFixed(0);
+                document.getElementById('weather-desc').innerText = "Live Forecast"; 
+                
+                const nowIdx = new Date().getHours();
+                const rain = Math.max(w.hourly.precipitation_probability[nowIdx], w.hourly.precipitation_probability[nowIdx+1]);
+                document.getElementById('rain-prob').innerText = rain + "%";
+                document.getElementById('rain-bar').style.width = rain + "%";
+            } catch(e) { console.log(e); }
+        }
+
+        setInterval(fetchData, 1500); 
+        initWeather();
+    </script>
+</body>
+</html>
