@@ -236,7 +236,7 @@
 
     <script>
         // ================= CONFIGURATION =================
-        const USE_SIMULATED_DATA = true; // Set to false for real data
+        const USE_SIMULATED_DATA = false; // <--- CHANGED TO FALSE FOR REAL DATA
         const SPREADSHEET_URL = 'https://script.google.com/macros/s/AKfycbzWzY51OI1uJLAQnnNqNMsBeBpQ845ZyLo4MzLYVjEohdNmb25GTTO3QqDj83y6Tm7N5A/exec'; 
         
         // ================= THEME & UI =================
@@ -313,11 +313,11 @@
         const SOIL_DRY = 1024;
         const SOIL_WET = 200;
 
-        // Simulated Data Generator (Now includes accumulating total water)
+        // Simulated Data Generator
         let simTotalWater = 0.0;
         function getSimulatedData() {
             const now = new Date();
-            simTotalWater += Math.random() * 0.01; // Slowly increase total
+            simTotalWater += Math.random() * 0.01;
             return [{
                 "Timestamp": new Date(now.getTime() - 2000).toISOString(),
                 "Temperature": 28 + Math.sin(now.getTime()/10000),
@@ -344,12 +344,41 @@
                     const json = await res.json();
                     const data = Array.isArray(json) ? json : [json];
                     latest = data[data.length - 1];
-                } catch(e) { console.error(e); return; }
+                    checkOnlineStatus(latest.Timestamp);
+                } catch(e) { 
+                    console.error(e); 
+                    return; 
+                }
             }
             
             if(latest) {
                 updateVisuals(latest);
                 updateHistory(latest);
+            }
+        }
+
+        function checkOnlineStatus(timestampStr) {
+            const lastTime = new Date(timestampStr).getTime();
+            const now = new Date().getTime();
+            const diffMins = (now - lastTime) / 60000;
+
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+
+            if(diffMins > 5) { // 5 minutes threshold
+                text.innerText = "OFFLINE";
+                text.classList.replace('text-green-600', 'text-red-600');
+                text.classList.replace('dark:text-green-400', 'dark:text-red-400');
+                dot.classList.remove('bg-green-500');
+                dot.classList.add('bg-red-500');
+                dot.children[0].classList.remove('animate-ping');
+            } else {
+                text.innerText = "ONLINE";
+                text.classList.replace('text-red-600', 'text-green-600');
+                text.classList.replace('dark:text-red-400', 'dark:text-green-400');
+                dot.classList.remove('bg-red-500');
+                dot.classList.add('bg-green-500');
+                dot.children[0].classList.add('animate-ping');
             }
         }
 
@@ -364,15 +393,15 @@
             document.getElementById('soil-circle').setAttribute('stroke', soilPercent < 30 ? '#ef4444' : '#22c55e');
 
             // 2. Temp
-            document.getElementById('temp-val').innerText = data.Temperature.toFixed(1);
+            document.getElementById('temp-val').innerText = (data.Temperature || 0).toFixed(1);
             
             // 3. Humidity
-            document.getElementById('hum-val').innerText = data.Humidity.toFixed(0) + "%";
+            document.getElementById('hum-val').innerText = (data.Humidity || 0).toFixed(0) + "%";
             document.getElementById('hum-circle').setAttribute('stroke-dasharray', `${data.Humidity}, 100`);
 
             // 4. ET0
-            document.getElementById('et0-val').innerText = data.ET0.toFixed(2);
-            document.getElementById('et0-bar').style.width = Math.min(100, (data.ET0 / 10) * 100) + "%";
+            document.getElementById('et0-val').innerText = (data.ET0 || 0).toFixed(2);
+            document.getElementById('et0-bar').style.width = Math.min(100, ((data.ET0 || 0) / 10) * 100) + "%";
 
             // 5. CWR (Water Need)
             document.getElementById('cwr-val').innerText = (data.CWR_Liters_Day || 0).toFixed(4);
@@ -409,7 +438,6 @@
                 total: data.TotalWaterLiters || 0
             });
 
-            // Update Mini Charts
             const labels = history.map(d => d.label);
             updateMiniChart(charts.soil, labels, history.map(d => d.soil));
             updateMiniChart(charts.temp, labels, history.map(d => d.temp));
@@ -418,7 +446,6 @@
             updateMiniChart(charts.cwr, labels, history.map(d => d.cwr));
             updateMiniChart(charts.total, labels, history.map(d => d.total));
 
-            // Update Main Chart
             mainChart.data.labels = labels;
             if(currentMainMetric === 'SoilMoisture') mainChart.data.datasets[0].data = history.map(d => d.soil);
             if(currentMainMetric === 'Temperature') mainChart.data.datasets[0].data = history.map(d => d.temp);
