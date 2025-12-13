@@ -116,7 +116,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -207,19 +206,27 @@
 
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border-l-4 border-cyan-500 flex flex-col h-64">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase">Total Water Used</h3>
-                    <i data-lucide="container" class="w-4 h-4 text-cyan-500"></i>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Pump Status</h3>
+                    <span id="pump-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-400 transition-colors">OFF</span>
                 </div>
+                
                 <div class="flex flex-col items-center justify-center flex-grow">
-                    <div class="bg-gray-900 text-cyan-400 font-mono text-3xl px-4 py-2 rounded shadow-inner border border-gray-700">
-                        <span id="total-val">0.00</span> <span class="text-sm text-gray-500">L</span>
+                    <div id="pump-icon-bg" class="mb-2 p-3 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors">
+                        <i id="pump-icon" data-lucide="settings-2" class="w-8 h-8 transition-transform duration-1000"></i>
                     </div>
-                    <div class="flex items-center mt-3 space-x-2 text-xs text-gray-500">
-                        <i data-lucide="activity" class="w-3 h-3"></i>
-                        <span>Flow: <span id="flow-val" class="font-bold text-cyan-600">0.0</span> L/min</span>
+                    <div class="text-center">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wide">Flow Rate</p>
+                        <p class="text-xl font-bold text-cyan-600 dark:text-cyan-400"><span id="flow-val">0.0</span> L/min</p>
                     </div>
                 </div>
-                <div class="h-12 w-full mt-auto"><canvas id="chart-total-mini"></canvas></div>
+
+                <div class="mt-auto pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <div class="flex items-center text-xs text-gray-500">
+                        <i data-lucide="container" class="w-3 h-3 mr-1"></i>
+                        Total:
+                    </div>
+                    <span class="text-sm font-bold text-gray-700 dark:text-gray-200"><span id="total-val">0.00</span> L</span>
+                </div>
             </div>
 
         </div>
@@ -247,7 +254,7 @@
 
     <script>
         // ================= CONFIGURATION =================
-        const USE_SIMULATED_DATA = false; // <--- CHANGED TO FALSE FOR REAL DATA
+        const USE_SIMULATED_DATA = false; 
         const SPREADSHEET_URL = 'https://script.google.com/macros/s/AKfycbzWzY51OI1uJLAQnnNqNMsBeBpQ845ZyLo4MzLYVjEohdNmb25GTTO3QqDj83y6Tm7N5A/exec'; 
         
         // ================= THEME & UI =================
@@ -286,7 +293,7 @@
             });
         }
 
-        // Init 6 Mini Charts
+        // Init Charts
         const charts = {
             soil: createMiniChart('chart-soil-mini', '#22c55e'),
             temp: createMiniChart('chart-temp-mini', '#ef4444'),
@@ -324,22 +331,20 @@
         const SOIL_DRY = 1024;
         const SOIL_WET = 200;
 
-        // Simulated Data Generator
-        let simTotalWater = 0.0;
         function getSimulatedData() {
             const now = new Date();
-            simTotalWater += Math.random() * 0.01;
             return [{
                 "Timestamp": new Date(now.getTime() - 2000).toISOString(),
                 "Temperature": 28 + Math.sin(now.getTime()/10000),
                 "Humidity": 70 + Math.random() * 5,
                 "SoilMoisture": 600 + Math.sin(now.getTime()/5000) * 200,
-                "Flowrate": Math.random() > 0.7 ? Math.random() * 2 : 0,
+                "Flowrate": 1.2, 
                 "ET0": 4.5 + Math.random(),
                 "CWR_Liters_Day": 0.057 + (Math.random() * 0.001),
-                "TotalWaterLiters": simTotalWater,
+                "TotalWaterLiters": 12.5,
                 "Kc_Value": 0.8,
-                "Days_Old": 15
+                "Days_Old": 15,
+                "Pump_Status": true 
             }];
         }
 
@@ -377,7 +382,7 @@
             const dot = document.getElementById('status-dot');
             const text = document.getElementById('status-text');
 
-            if(diffMins > 5) { // 5 minutes threshold
+            if(diffMins > 5) { 
                 text.innerText = "OFFLINE";
                 text.classList.replace('text-green-600', 'text-red-600');
                 text.classList.replace('dark:text-green-400', 'dark:text-red-400');
@@ -418,9 +423,31 @@
             // 5. CWR (Water Need)
             document.getElementById('cwr-val').innerText = (data.CWR_Liters_Day || 0).toFixed(4);
 
-            // 6. Total Water & Flow
+            // 6. Pump Status (READING FROM SHEET)
+            const flowRate = (data.Flowrate || 0);
             document.getElementById('total-val').innerText = (data.TotalWaterLiters || 0).toFixed(2);
-            document.getElementById('flow-val').innerText = (data.Flowrate || 0).toFixed(1);
+            document.getElementById('flow-val').innerText = flowRate.toFixed(1);
+
+            const pumpBadge = document.getElementById('pump-badge');
+            const pumpIcon = document.getElementById('pump-icon');
+            const pumpBg = document.getElementById('pump-icon-bg');
+
+            // Check if Pump_Status is "TRUE" (String) or true (Boolean)
+            const isPumpOn = String(data.Pump_Status).toLowerCase() === 'true';
+
+            if(isPumpOn) { 
+                pumpBadge.innerText = "RUNNING";
+                pumpBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300 transition-colors";
+                pumpIcon.classList.add('animate-spin');
+                pumpIcon.setAttribute('class', 'w-8 h-8 animate-spin text-green-600 dark:text-green-400');
+                pumpBg.className = "mb-2 p-3 rounded-full bg-green-50 dark:bg-green-900/30 transition-colors";
+            } else { 
+                pumpBadge.innerText = "OFF";
+                pumpBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-400 transition-colors";
+                pumpIcon.classList.remove('animate-spin');
+                pumpIcon.setAttribute('class', 'w-8 h-8 text-gray-400');
+                pumpBg.className = "mb-2 p-3 rounded-full bg-gray-100 dark:bg-gray-700 transition-colors";
+            }
 
             // AI Logic
             let aiMsg = "System optimal.";
@@ -432,7 +459,6 @@
             document.getElementById('ai-action').innerText = action;
             document.getElementById('kc-display').innerText = `Kc: ${(data.Kc_Value || 0.7).toFixed(2)}`;
             
-            // UPDATE: Display Days Old
             const daysOld = data.Days_Old !== undefined ? data.Days_Old : 0;
             document.getElementById('days-val').innerText = daysOld;
         }
