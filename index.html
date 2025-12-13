@@ -293,14 +293,13 @@
             });
         }
 
-        // Init Charts
+        // Init Charts (REMOVED 'total' to fix the error)
         const charts = {
             soil: createMiniChart('chart-soil-mini', '#22c55e'),
             temp: createMiniChart('chart-temp-mini', '#ef4444'),
             hum: createMiniChart('chart-hum-mini', '#a855f7'),
             et0: createMiniChart('chart-et0-mini', '#f97316'),
-            cwr: createMiniChart('chart-cwr-mini', '#2563eb'),
-            total: createMiniChart('chart-total-mini', '#06b6d4')
+            cwr: createMiniChart('chart-cwr-mini', '#2563eb')
         };
 
         // Init Main Chart
@@ -486,8 +485,8 @@
             updateMiniChart(charts.hum, labels, history.map(d => d.hum));
             updateMiniChart(charts.et0, labels, history.map(d => d.et0));
             updateMiniChart(charts.cwr, labels, history.map(d => d.cwr));
-            updateMiniChart(charts.total, labels, history.map(d => d.total));
-
+            // Removed updateMiniChart for total water since the chart is gone
+            
             mainChart.data.labels = labels;
             if(currentMainMetric === 'SoilMoisture') mainChart.data.datasets[0].data = history.map(d => d.soil);
             if(currentMainMetric === 'Temperature') mainChart.data.datasets[0].data = history.map(d => d.temp);
